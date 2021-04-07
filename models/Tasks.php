@@ -3,6 +3,7 @@
 namespace app\models;
 
 use Yii;
+use yii\helpers\ArrayHelper;
 
 /**
  * This is the model class for table "tasks".
@@ -103,4 +104,18 @@ class Tasks extends \yii\db\ActiveRecord
     {
         return new \app\models\query\TasksQuery(get_called_class());
     }
+
+    public static function getTasksArray()
+    {
+        $tasks = self::find()->all();
+
+        $tasks_array = [];
+        foreach($tasks as $task)
+        {
+            $tasks_array[$task->id]['id'] = $task->id;
+            $tasks_array[$task->id]['name'] = $task->name;
+        }
+        return ArrayHelper::map($tasks_array, 'id', 'name');
+    }
+
 }

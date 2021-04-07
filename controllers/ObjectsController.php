@@ -2,12 +2,14 @@
 
 namespace app\controllers;
 
+use app\models\Tasks;
 use Yii;
 use app\models\Objects;
 use app\models\search\ObjectsSearch;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
+use yii\web\UploadedFile;
 
 /**
  * ObjectsController implements the CRUD actions for Objects model.
@@ -65,13 +67,28 @@ class ObjectsController extends Controller
     public function actionCreate()
     {
         $model = new Objects();
+        $dataObjects = Objects::getObjectsArray();
+        $dataTasks = Tasks::getTasksArray();
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+
+        if ($model->load(Yii::$app->request->post())) {
+            $model->files = UploadedFile::getInstances($model, 'images');
+
+            foreach ($model->files as $key => $file) {
+
+                $file->saveAs('/file-upload/'. $file->baseName . '.' . $file->extension);//Upload files to server
+                $model->images[] = ['url'=> 'file-upload/' . $file->baseName . '.' . $file->extension.'**'];//Save file names in database- '**' is for separating images
+            }
+
+            if($model->save()){
+                return $this->redirect(['view', 'id' => $model->id]);
+            }
         }
 
         return $this->render('create', [
             'model' => $model,
+            'dataObjects' => $dataObjects,
+            'dataTasks' => $dataTasks,
         ]);
     }
 

@@ -1,7 +1,10 @@
 <?php
 
+use kartik\file\FileInput;
+use kartik\select2\Select2;
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
+use yii\helpers\Url;
 
 /* @var $this yii\web\View */
 /* @var $model app\models\Objects */
@@ -14,18 +17,46 @@ use yii\widgets\ActiveForm;
 
     <?= $form->field($model, 'name')->textInput(['maxlength' => true]) ?>
 
-    <?= $form->field($model, 'images')->textInput() ?>
+    <?php //= $form->field($model, 'images')->textInput() ?>
+    <?php
+    echo FileInput::widget([
+        'name' => 'file_input',
+        'options' => [
+            'multiple' => true,
+             'accept' => 'image/*',
 
-    <?= $form->field($model, 'object_id')->textInput() ?>
+        ],
+        'pluginOptions' => [
+            'uploadUrl' => Url::to(['/site/file-upload']),
+            'uploadExtraData' => [
+                'album_id' => 20,
+                'cat_id' => 'Nature'
+            ],
+            'maxFileCount' => 10
+        ]
+    ]);
+    ?>
+    <?php echo '<label class="control-label">Object</label>';
+    echo Select2::widget([
+        'name' => 'object_id',
+        'data' => $dataObjects,
+        'options' => [
+            'placeholder' => 'Select object ...',
+        ],
+    ]);
+    ?>
 
-    <?= $form->field($model, 'created_at')->textInput() ?>
 
-    <?= $form->field($model, 'created_by')->textInput() ?>
-
-    <?= $form->field($model, 'updated_at')->textInput() ?>
-
-    <?= $form->field($model, 'updated_by')->textInput() ?>
-
+    <?php echo '<label class="control-label">Tasks</label>';
+    echo Select2::widget([
+        'name' => 'task_ids',
+        'data' => $dataTasks,
+        'options' => [
+            'placeholder' => 'Select task ...',
+            'multiple' => true
+        ],
+    ]);
+    ?>
     <div class="form-group">
         <?= Html::submitButton('Save', ['class' => 'btn btn-success']) ?>
     </div>
