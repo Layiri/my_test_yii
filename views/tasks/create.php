@@ -1,5 +1,6 @@
 <?php
 
+use app\models\ListsTasks;
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
@@ -15,6 +16,8 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <?= $this->render('_form', [
         'model' => $model,
+        'modelsListTask' => (empty($modelsListTask)) ? [new ListsTasks] : $modelsListTask
+
     ]) ?>
 
 </div>

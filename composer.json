@@ -29,7 +29,10 @@
         "symfony/browser-kit": ">=2.7 <=4.2.4",
         "codeception/module-filesystem": "^1.0.0",
         "codeception/module-yii2": "^1.0.0",
-        "codeception/module-asserts": "^1.0.0"
+        "codeception/module-asserts": "^1.0.0",
+        "kartik-v/yii2-grid": "dev-master",
+        "kartik-v/yii2-widget-select2": "dev-master",
+        "wbraganca/yii2-dynamicform": "dev-master"
     },
     "config": {
         "process-timeout": 1800,

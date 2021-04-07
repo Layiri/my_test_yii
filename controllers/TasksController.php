@@ -2,9 +2,13 @@
 
 namespace app\controllers;
 
+use app\models\ListsTasks;
+use app\models\ModelExtra;
 use Yii;
 use app\models\Tasks;
 use app\models\search\TasksSearch as TasksSearch;
+use yii\db\Exception;
+use yii\helpers\ArrayHelper;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
@@ -65,13 +69,44 @@ class TasksController extends Controller
     public function actionCreate()
     {
         $model = new Tasks();
+        $modelsListTask = [new ListsTasks];
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+        if ($model->load(Yii::$app->request->post()) ) {
+
+            $modelsListTask = ModelExtra::createMultiple(ListsTasks::classname());
+            ModelExtra::loadMultiple($modelsListTask, Yii::$app->request->post());
+
+            // validate all models
+            $valid = $model->validate();
+            $valid = ModelExtra::validateMultiple($modelsListTask) && $valid;
+
+
+            if ($valid) {
+                $transaction = \Yii::$app->db->beginTransaction();
+
+                try {
+                    if ($flag = $model->save(false)) {
+                        foreach ($modelsListTask as $task) {
+                            $task->task_id = $model->id;
+                            if (! ($flag = $task->save(false))) {
+                                $transaction->rollBack();
+                                break;
+                            }
+                        }
+                    }
+                    if ($flag) {
+                        $transaction->commit();
+                        return $this->redirect(['view', 'id' => $model->id]);
+                    }
+                } catch (Exception $e) {
+                    $transaction->rollBack();
+                }
+            }
         }
 
         return $this->render('create', [
             'model' => $model,
+            'modelsListTask' => (empty($modelsListTask)) ? [new ListsTasks] : $modelsListTask
         ]);
     }
 
@@ -85,13 +120,48 @@ class TasksController extends Controller
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
+        $modelsListTask = $model->listTasks;
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+        if ($model->load(Yii::$app->request->post()) ) {
+
+            $oldIDs = ArrayHelper::map($modelsListTask, 'id', 'id');
+            $modelsListTask = ModelExtra::createMultiple(ListsTasks::classname(), $modelsListTask);
+            ModelExtra::loadMultiple($modelsListTask, Yii::$app->request->post());
+            $deletedIDs = array_diff($oldIDs, array_filter(ArrayHelper::map($modelsListTask, 'id', 'id')));
+
+            // validate all models
+            $valid = $model->validate();
+            $valid = ModelExtra::validateMultiple($modelsListTask) && $valid;
+
+            if ($valid) {
+                $transaction = \Yii::$app->db->beginTransaction();
+                try {
+                    if ($flag = $model->save(false)) {
+                        if (!empty($deletedIDs)) {
+                            ListsTasks::deleteAll(['id' => $deletedIDs]);
+                        }
+                        foreach ($modelsListTask as $task) {
+                            $task->task_id = $model->id;
+                            if (! ($flag = $task->save(false))) {
+                                $transaction->rollBack();
+                                break;
+                            }
+                        }
+                    }
+                    if ($flag) {
+                        $transaction->commit();
+                        return $this->redirect(['view', 'id' => $model->id]);
+                    }
+                } catch (Exception $e) {
+                    $transaction->rollBack();
+                }
+            }
+
         }
 
         return $this->render('update', [
             'model' => $model,
+            'modelsListTask' => (empty($modelsListTask)) ? [new ListsTasks] : $modelsListTask
         ]);
     }
 
